@@ -22,6 +22,7 @@ public class TeleOpTest extends OpMode {
         mW = hardwareMap.dcMotor.get("mW");
         mW.setDirection(DcMotorSimple.Direction.FORWARD);
         mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        mW.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         sH = hardwareMap.servo.get("sH");
         sH.setDirection(Servo.Direction.REVERSE);
@@ -34,6 +35,10 @@ public class TeleOpTest extends OpMode {
         mR.setPower(-gamepad1.right_stick_y);
         mW.setPower(gamepad1.right_stick_x);
         sH.setPosition(gamepad1.right_trigger);
+
+        telemetry.addData("mW", mW.getCurrentPosition());
+        telemetry.update();
+
     }
 }
 
