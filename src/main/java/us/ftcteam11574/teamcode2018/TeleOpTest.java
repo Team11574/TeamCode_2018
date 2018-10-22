@@ -35,9 +35,17 @@ public class TeleOpTest extends OpMode {
         // drivetrain: tank mode with left and right analog sticks
         mL.setPower(-gamepad1.left_stick_y);
         mR.setPower(-gamepad1.right_stick_y);
-        mW.setPower(gamepad1.right_stick_x);
-        sH.setPosition(gamepad1.right_trigger);
 
+        // winch motor: left = up, right = down
+        mW.setPower(gamepad1.left_trigger - gamepad1.right_trigger);
+
+        // latch servo: b = open, x = close
+        if (gamepad1.b)
+            sH.setPosition(Constants.LATCH_SERVO_OPEN);
+        else if (gamepad1.x)
+            sH.setPosition(Constants.LATCH_SERVO_CLOSED);
+
+        telemetry.addData("sH", sH.getPosition());
         telemetry.addData("mW", mW.getCurrentPosition());
         telemetry.update();
 
