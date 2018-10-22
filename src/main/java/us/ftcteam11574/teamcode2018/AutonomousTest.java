@@ -88,8 +88,9 @@ public class AutonomousTest extends LinearOpMode {
         // winch all the way down (mostly by gravity)
         winchMoveToPosition(300);
         winchWaitForMove();
-        // back up drive motors a bit
-        driveMoveToPosition(-50,0.2);
+
+        // back up drive motors a bit to straighten against lander
+        driveMoveToPosition(-100, 0.2);
         driveWaitForMove();
 
         // unlatch from lander
@@ -99,7 +100,8 @@ public class AutonomousTest extends LinearOpMode {
         winchMoveToPosition(125);
         winchWaitForMove();
 
-        driveMoveToPosition(900,0.5);
+        // drive to the crater or depot
+        driveMoveToPosition(1000, 0.5);
         driveWaitForMove();
     }
 
