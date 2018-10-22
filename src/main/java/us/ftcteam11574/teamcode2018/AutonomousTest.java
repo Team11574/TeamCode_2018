@@ -103,6 +103,10 @@ public class AutonomousTest extends LinearOpMode {
         // drive to the crater or depot
         driveMoveToPosition(1000, 0.5);
         driveWaitForMove();
+
+        // winch down below horizontal to drop the team marker
+        winchMoveToPosition(-200);
+        winchWaitForMove();
     }
 
     @Override
