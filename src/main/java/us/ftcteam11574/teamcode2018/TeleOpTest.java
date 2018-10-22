@@ -16,6 +16,7 @@ public class TeleOpTest extends OpMode {
     public void init() {
         mL = hardwareMap.dcMotor.get("mL");
         mL.setDirection(DcMotorSimple.Direction.REVERSE);
+
         mR = hardwareMap.dcMotor.get("mR");
         mR.setDirection(DcMotorSimple.Direction.FORWARD);
 
@@ -26,11 +27,12 @@ public class TeleOpTest extends OpMode {
 
         sH = hardwareMap.servo.get("sH");
         sH.setDirection(Servo.Direction.REVERSE);
-        sH.setPosition(0.0);
+        sH.setPosition(Constants.LATCH_SERVO_CLOSED);
     }
 
     @Override
     public void loop() {
+        // drivetrain: tank mode with left and right analog sticks
         mL.setPower(-gamepad1.left_stick_y);
         mR.setPower(-gamepad1.right_stick_y);
         mW.setPower(gamepad1.right_stick_x);
