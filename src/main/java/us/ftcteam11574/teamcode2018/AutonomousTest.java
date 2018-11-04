@@ -105,7 +105,7 @@ public class AutonomousTest extends LinearOpMode {
         driveWaitForMove();
 
         // winch down below horizontal to drop the team marker
-        winchMoveToPosition(-200);
+        winchMoveToPosition(-50);
         winchWaitForMove();
     }
 
