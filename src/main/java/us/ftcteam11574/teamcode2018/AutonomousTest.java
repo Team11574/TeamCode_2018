@@ -36,9 +36,9 @@ public class AutonomousTest extends LinearOpMode {
 
     private int winchCalculateEncoderCounts(double mm) {
         return (int) (mm / Constants.WINCH_ENCODER_COUNTS_PER_MM);
-
     }
-    private void winchMoveToPosition(double position_mm){
+
+    private void winchMoveToPosition(double position_mm, double speed) {
         mW.setTargetPosition(winchCalculateEncoderCounts(position_mm));
         mW.setPower(0.6);
     }
@@ -49,19 +49,17 @@ public class AutonomousTest extends LinearOpMode {
             telemetry.addData("mW Target", mW.getTargetPosition());
             telemetry.update();
         }
-
     }
 
     private int driveCalculateEncoderCounts(double mm) {
         return (int) (mm / Constants.DRIVE_ENCODER_COUNTS_PER_MM);
-
     }
 
-    private void driveMoveToPosition(double position_mm, double power){
-        mR.setTargetPosition(driveCalculateEncoderCounts(position_mm));
-        mR.setPower(power);
-        mL.setTargetPosition(driveCalculateEncoderCounts(position_mm));
+    private void driveMoveToPosition(double l_position_mm, double r_position_mm, double power) {
+        mL.setTargetPosition(driveCalculateEncoderCounts(l_position_mm));
+        mR.setTargetPosition(driveCalculateEncoderCounts(r_position_mm));
         mL.setPower(power);
+        mR.setPower(power);
     }
 
     private void driveWaitForMove() {
@@ -82,35 +80,35 @@ public class AutonomousTest extends LinearOpMode {
 
     private void robotRun(){
         // winch up a small amount to release the latch
-        winchMoveToPosition(-50);
+        winchMoveToPosition(-50, Constants.WINCH_SPEED_NORMAL);
         winchWaitForMove();
 
         // winch all the way down (mostly by gravity)
-        winchMoveToPosition(300);
+        winchMoveToPosition(375, Constants.WINCH_SPEED_NORMAL);
         winchWaitForMove();
 
         // back up drive motors a bit to straighten against lander
-        driveMoveToPosition(-100, 0.2);
+        driveMoveToPosition(-100, -100, Constants.DRIVE_SPEED_DETACH);
         driveWaitForMove();
 
         // unlatch from lander
         hingeUnlatch();
 
         // winch hinge down a bit to release from lander
-        winchMoveToPosition(125);
+        winchMoveToPosition(125, Constants.WINCH_SPEED_FAST);
         winchWaitForMove();
 
         // drive to the crater or depot
-        driveMoveToPosition(1000, 0.5);
+        driveMoveToPosition(1000, 1000, Constants.DRIVE_SPEED_TO_PARK);
         driveWaitForMove();
 
         // winch down below horizontal to drop the team marker
-        winchMoveToPosition(-50);
+        winchMoveToPosition(-50, Constants.WINCH_SPEED_FAST);
         winchWaitForMove();
     }
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
         robotInit();
         waitForStart();
         robotRun();
