@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class TeleOpTest extends OpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
+    private DigitalChannel mWLd;
 
     @Override
     public void init() {
@@ -28,6 +30,8 @@ public class TeleOpTest extends OpMode {
         sH = hardwareMap.servo.get("sH");
         sH.setDirection(Servo.Direction.REVERSE);
         sH.setPosition(Constants.LATCH_SERVO_CLOSED);
+
+        mWLd = hardwareMap.digitalChannel.get("mWLd");
     }
 
     @Override
@@ -37,7 +41,12 @@ public class TeleOpTest extends OpMode {
         mR.setPower(-gamepad1.right_stick_y);
 
         // winch motor: left = up, right = down
-        mW.setPower(gamepad1.left_trigger - gamepad1.right_trigger);
+        if (gamepad1.left_trigger > 0)
+            mW.setPower(gamepad1.left_trigger);
+        else if (gamepad1.right_trigger > 0 && mWLd.getState() == false)
+            mW.setPower(-gamepad1.right_trigger);
+        else
+            mW.setPower(0);
 
         // latch servo: b = open, x = close
         if (gamepad1.b)
@@ -47,6 +56,7 @@ public class TeleOpTest extends OpMode {
 
         telemetry.addData("sH", sH.getPosition());
         telemetry.addData("mW", mW.getCurrentPosition());
+        telemetry.addData("mWLd", mWLd.getState());
         telemetry.update();
 
     }
