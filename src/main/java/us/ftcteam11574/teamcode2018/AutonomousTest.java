@@ -99,8 +99,10 @@ public class AutonomousTest extends LinearOpMode {
         winchMoveToZero();
 
         // winch all the way down (mostly by gravity)
-        winchMoveToPosition(425, Constants.WINCH_SPEED_NORMAL);
+        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        winchMoveToPosition(425, Constants.WINCH_SPEED_FAST);
         winchWaitForMove();
+        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // back up drive motors a bit to straighten against lander
         driveMoveToPosition(-100, -100, Constants.DRIVE_SPEED_DETACH);
