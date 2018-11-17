@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @SuppressWarnings({"unused"})
@@ -11,6 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class AutonomousTest extends LinearOpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
+    private DigitalChannel mWLd;
+
 
     private void robotInit() {
         mL = hardwareMap.dcMotor.get("mL");
@@ -32,6 +35,19 @@ public class AutonomousTest extends LinearOpMode {
         sH = hardwareMap.servo.get("sH");
         sH.setDirection(Servo.Direction.REVERSE);
         sH.setPosition(Constants.LATCH_SERVO_CLOSED);
+
+        mWLd = hardwareMap.digitalChannel.get("mWLd");
+
+    }
+
+    private void winchMoveToZero() {
+        mW.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while (mWLd.getState() == false) {
+            mW.setPower(-0.6);
+        }
+        mW.setPower(0);
+        mW.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mW.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     private int winchCalculateEncoderCounts(double mm) {
@@ -80,11 +96,10 @@ public class AutonomousTest extends LinearOpMode {
 
     private void robotRun(){
         // winch up a small amount to release the latch
-        winchMoveToPosition(-50, Constants.WINCH_SPEED_NORMAL);
-        winchWaitForMove();
+        winchMoveToZero();
 
         // winch all the way down (mostly by gravity)
-        winchMoveToPosition(375, Constants.WINCH_SPEED_NORMAL);
+        winchMoveToPosition(425, Constants.WINCH_SPEED_NORMAL);
         winchWaitForMove();
 
         // back up drive motors a bit to straighten against lander
@@ -95,7 +110,7 @@ public class AutonomousTest extends LinearOpMode {
         hingeUnlatch();
 
         // winch hinge down a bit to release from lander
-        winchMoveToPosition(125, Constants.WINCH_SPEED_FAST);
+        winchMoveToPosition(175, Constants.WINCH_SPEED_FAST);
         winchWaitForMove();
 
         // drive to the crater or depot
@@ -103,8 +118,7 @@ public class AutonomousTest extends LinearOpMode {
         driveWaitForMove();
 
         // winch down below horizontal to drop the team marker
-        winchMoveToPosition(-50, Constants.WINCH_SPEED_FAST);
-        winchWaitForMove();
+        winchMoveToZero();
     }
 
     @Override
