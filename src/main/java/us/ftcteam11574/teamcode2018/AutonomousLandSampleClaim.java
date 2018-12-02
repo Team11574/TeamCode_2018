@@ -1,11 +1,26 @@
 package us.ftcteam11574.teamcode2018;
 
+import android.os.Environment;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import us.jcole.opencv.GoldMineralLocator;
+import us.jcole.opencvpipeline.GoldMineralPipeline;
 
 @SuppressWarnings({"unused"})
 @Autonomous
@@ -14,8 +29,31 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     private Servo sH;
     private DigitalChannel mWLd;
 
+    GoldMineralLocator goldMineralLocator;
+    GoldMineralPipeline goldMineralPipeline;
+
+    final private File SAVED_IMAGE_PATH =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+    final private SimpleDateFormat SAVED_IMAGE_DATE_FORMAT =
+            new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+
+    // Save an OpenCV image Mat (in RGBA format) to disk (in JPEG BGR format)
+    // for later analysis.
+    private static void saveCapturedImage(File path, String prefix, Mat rgbaImage, String suffix) {
+        Mat bgrImage = new Mat();
+        Imgproc.cvtColor(rgbaImage, bgrImage, Imgproc.COLOR_RGBA2BGR, 3);
+        String filename = prefix + "_" + suffix + ".jpg";
+        File file = new File(path, filename);
+        Imgcodecs.imwrite(file.toString(), bgrImage);
+    }
 
     private void robotInit() {
+        goldMineralLocator = new GoldMineralLocator();
+        goldMineralPipeline = new GoldMineralPipeline(goldMineralLocator);
+        goldMineralPipeline.init(hardwareMap.appContext,
+                CameraViewDisplay.getInstance());
+        goldMineralPipeline.enable();
+
         mL = hardwareMap.dcMotor.get("mL");
         mL.setDirection(DcMotorSimple.Direction.REVERSE);
         mL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -71,17 +109,23 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         return (int) (mm / Constants.DRIVE_ENCODER_COUNTS_PER_MM);
     }
 
-    private void driveMoveToPosition(double l_position_mm, double r_position_mm, double power) {
-        mL.setTargetPosition(driveCalculateEncoderCounts(l_position_mm));
-        mR.setTargetPosition(driveCalculateEncoderCounts(r_position_mm));
+    private void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
+        mL.setTargetPosition(mL.getCurrentPosition() + driveCalculateEncoderCounts(l_position_mm));
+        mR.setTargetPosition(mR.getCurrentPosition() + driveCalculateEncoderCounts(r_position_mm));
         mL.setPower(power);
         mR.setPower(power);
-    }
 
-    private void driveWaitForMove() {
-        while(mR.getCurrentPosition() != mR.getTargetPosition()) {
+        while (true) {
+            if (r_position_mm != 0.0 && mR.getCurrentPosition() == mR.getTargetPosition())
+                return;
+
+            if (r_position_mm != 0.0 && mL.getCurrentPosition() == mL.getTargetPosition())
+                return;
+
             telemetry.addData("mR Current", mR.getCurrentPosition());
             telemetry.addData("mR Target", mR.getTargetPosition());
+            telemetry.addData("mL Current", mL.getCurrentPosition());
+            telemetry.addData("mL Target", mL.getTargetPosition());
             telemetry.update();
         }
     }
@@ -105,8 +149,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // back up drive motors a bit to straighten against lander
-        driveMoveToPosition(-100, -100, Constants.DRIVE_SPEED_DETACH);
-        driveWaitForMove();
+        driveMoveToRelativePosition(-100, -100, Constants.DRIVE_SPEED_DETACH);
 
         // unlatch from lander
         hingeUnlatch();
@@ -115,9 +158,29 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         winchMoveToPosition(175, Constants.WINCH_SPEED_FAST);
         winchWaitForMove();
 
-        // drive to the crater or depot
-        driveMoveToPosition(1000, 1000, Constants.DRIVE_SPEED_TO_PARK);
-        driveWaitForMove();
+        GoldMineralLocator.MineralPosition mineralPosition =
+                goldMineralLocator.getLastKnownGoldMineralPosition();
+
+        if (mineralPosition == GoldMineralLocator.MineralPosition.UNKNOWN ||
+                mineralPosition == GoldMineralLocator.MineralPosition.CENTER) {
+            driveMoveToRelativePosition(1100, 1100,
+                    Constants.DRIVE_SPEED_TO_PARK);
+        } else if (mineralPosition == GoldMineralLocator.MineralPosition.LEFT ||
+                mineralPosition==GoldMineralLocator.MineralPosition.RIGHT) {
+            double m = 1.0;
+            if (mineralPosition == GoldMineralLocator.MineralPosition.RIGHT)
+                m = -1.0;
+            driveMoveToRelativePosition(180, 180,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(m*-92, m*92,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(900, 900,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(m*220, m*-220,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(450, 450,
+                    Constants.DRIVE_SPEED_TO_PARK);
+        }
 
         // winch down below horizontal to drop the team marker
         winchMoveToZero();
@@ -126,7 +189,35 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     @Override
     public void runOpMode() {
         robotInit();
-        waitForStart();
+
+        // Send telemetry for the Gold Mineral position while waiting for start.
+        while (!isStarted() && !isStopRequested()) {
+            telemetry.addData("Current Position",
+                    goldMineralLocator.getCurrentGoldMineralPosition());
+            telemetry.addData("Last Known Position",
+                    goldMineralLocator.getLastKnownGoldMineralPosition());
+            telemetry.update();
+        }
+
+        // Turn off the pipeline and keep whatever the last thing we saw was.
+        goldMineralPipeline.disable();
+
+        // Generate a prefix so that all images saved have the same prefix.
+        String savedImagePrefix = SAVED_IMAGE_DATE_FORMAT.format(new Date());
+
+        // Save the most recent original image with a suffix of "left",
+        // "center", "right", or "unknown" for easier use with the test
+        // suite later.
+        saveCapturedImage(SAVED_IMAGE_PATH, savedImagePrefix,
+                goldMineralLocator.getOriginalImage(),
+                goldMineralLocator.getCurrentGoldMineralPosition().
+                        toString().toLowerCase());
+
+        // Save the annotated version of the original image.
+        saveCapturedImage(SAVED_IMAGE_PATH, savedImagePrefix,
+                goldMineralLocator.getAnnotatedImage(),
+                "annotated");
+
         robotRun();
     }
 }
