@@ -18,7 +18,7 @@ public class GoldMineralPipeline extends OpenCVPipeline {
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-            Mat rgb = inputFrame.rgba();
+        Mat rgb = inputFrame.rgba();
         Mat gray = inputFrame.gray();
 
         if (rgb == null)
