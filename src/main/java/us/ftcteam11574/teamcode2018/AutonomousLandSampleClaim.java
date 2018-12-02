@@ -78,6 +78,12 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
     }
 
+    void robotStopAllMotion() {
+        mL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mW.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
     private void winchMoveToZero() {
         mW.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         while (mWLd.getState() == false) {
@@ -98,11 +104,13 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void winchWaitForMove() {
-        while(mW.getCurrentPosition() != mW.getTargetPosition()) {
+        while(!isStopRequested() && mW.getCurrentPosition() != mW.getTargetPosition()) {
             telemetry.addData("mW Current", mW.getCurrentPosition());
             telemetry.addData("mW Target", mW.getTargetPosition());
             telemetry.update();
         }
+        if (isStopRequested())
+            robotStopAllMotion();
     }
 
     private int driveCalculateEncoderCounts(double mm) {
@@ -115,7 +123,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mL.setPower(power);
         mR.setPower(power);
 
-        while (true) {
+        while (!isStopRequested()) {
             if (r_position_mm != 0.0 && mR.getCurrentPosition() == mR.getTargetPosition())
                 return;
 
@@ -128,6 +136,8 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
             telemetry.addData("mL Target", mL.getTargetPosition());
             telemetry.update();
         }
+        if (isStopRequested())
+            robotStopAllMotion();
     }
 
     private void hingeUnlatch(){
