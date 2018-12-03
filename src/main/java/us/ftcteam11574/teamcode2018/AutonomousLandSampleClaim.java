@@ -98,13 +98,17 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         return (int) (mm / Constants.WINCH_ENCODER_COUNTS_PER_MM);
     }
 
-    private void winchMoveToPosition(double position_mm, double speed) {
-        mW.setTargetPosition(winchCalculateEncoderCounts(position_mm));
+    private void winchMoveToRelativePosition(double position_mm, double speed) {
+        mW.setTargetPosition(mW.getCurrentPosition() + winchCalculateEncoderCounts(position_mm));
         mW.setPower(0.6);
-    }
 
-    private void winchWaitForMove() {
-        while(!isStopRequested() && mW.getCurrentPosition() != mW.getTargetPosition()) {
+        while (!isStopRequested()) {
+            if (position_mm > 0.0 && mW.getCurrentPosition() >= mW.getTargetPosition())
+                return;
+
+            if (position_mm < 0.0 && mW.getCurrentPosition() <= mW.getTargetPosition())
+                return;
+
             telemetry.addData("mW Current", mW.getCurrentPosition());
             telemetry.addData("mW Target", mW.getTargetPosition());
             telemetry.update();
@@ -124,10 +128,16 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(power);
 
         while (!isStopRequested()) {
-            if (r_position_mm != 0.0 && mR.getCurrentPosition() == mR.getTargetPosition())
+            if (r_position_mm > 0.0 && mR.getCurrentPosition() >= mR.getTargetPosition())
                 return;
 
-            if (r_position_mm != 0.0 && mL.getCurrentPosition() == mL.getTargetPosition())
+            if (r_position_mm < 0.0 && mR.getCurrentPosition() <= mR.getTargetPosition())
+                return;
+
+            if (l_position_mm > 0.0 && mL.getCurrentPosition() >= mL.getTargetPosition())
+                return;
+
+            if (l_position_mm < 0.0 && mL.getCurrentPosition() <= mL.getTargetPosition())
                 return;
 
             telemetry.addData("mR Current", mR.getCurrentPosition());
@@ -154,8 +164,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
         // winch all the way down (mostly by gravity)
         mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        winchMoveToPosition(425, Constants.WINCH_SPEED_FAST);
-        winchWaitForMove();
+        winchMoveToRelativePosition(425, Constants.WINCH_SPEED_FAST);
         mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // back up drive motors a bit to straighten against lander
@@ -165,8 +174,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         hingeUnlatch();
 
         // winch hinge down a bit to release from lander
-        winchMoveToPosition(175, Constants.WINCH_SPEED_FAST);
-        winchWaitForMove();
+        winchMoveToRelativePosition(-250, Constants.WINCH_SPEED_FAST);
 
         GoldMineralLocator.MineralPosition mineralPosition =
                 goldMineralLocator.getLastKnownGoldMineralPosition();
