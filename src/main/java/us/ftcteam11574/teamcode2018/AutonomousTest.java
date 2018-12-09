@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @SuppressWarnings({"unused"})
 @Autonomous
-public class AutonomousLandNaiveClaim extends LinearOpMode {
+public class AutonomousTest extends LinearOpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
     private DigitalChannel mWLd;

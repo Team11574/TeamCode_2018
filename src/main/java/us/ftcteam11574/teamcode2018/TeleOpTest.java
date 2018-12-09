@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp
 @SuppressWarnings({"unused"})
-public class TeleOpTankDrive extends OpMode {
+public class TeleOpTest extends OpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
     private DigitalChannel mWLd;
