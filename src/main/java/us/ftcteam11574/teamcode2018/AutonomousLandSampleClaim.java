@@ -181,7 +181,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
         if (mineralPosition == GoldMineralLocator.MineralPosition.UNKNOWN ||
                 mineralPosition == GoldMineralLocator.MineralPosition.CENTER) {
-            driveMoveToRelativePosition(1100, 1100,
+            driveMoveToRelativePosition(275, 275,
                     Constants.DRIVE_SPEED_TO_PARK);
         } else if (mineralPosition == GoldMineralLocator.MineralPosition.LEFT ||
                 mineralPosition==GoldMineralLocator.MineralPosition.RIGHT) {
@@ -192,11 +192,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
                     Constants.DRIVE_SPEED_TO_PARK);
             driveMoveToRelativePosition(m*-46, m*46,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(450, 450,
+            driveMoveToRelativePosition(550, 550,
                     Constants.DRIVE_SPEED_TO_PARK);
             driveMoveToRelativePosition(m*110, m*-110,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(225, 225,
+            driveMoveToRelativePosition(250, 250,
                     Constants.DRIVE_SPEED_TO_PARK);
         }
 
