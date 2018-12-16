@@ -6,7 +6,7 @@ public class Constants {
 
     static final double WINCH_ENCODER_COUNTS_PER_MM = 157.08 / (60 * 2 * 24);
 
-    static final double DRIVE_ENCODER_COUNTS_PER_MM = (20 * 9.6775) / (40 * 1 * 28);
+    static final double DRIVE_ENCODER_COUNTS_PER_MM = (20 * 9.6775) / (40 * 0.5 * 28);
 
     static final double DRIVE_SPEED_DETACH = 0.4;
     static final double DRIVE_SPEED_TO_PARK = 0.7;
