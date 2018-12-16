@@ -168,7 +168,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // back up drive motors a bit to straighten against lander
-        driveMoveToRelativePosition(-50, -50, Constants.DRIVE_SPEED_DETACH);
+        driveMoveToRelativePosition(-100, -100, Constants.DRIVE_SPEED_DETACH);
 
         // unlatch from lander
         hingeUnlatch();
@@ -188,15 +188,15 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
             double m = 1.0;
             if (mineralPosition == GoldMineralLocator.MineralPosition.RIGHT)
                 m = -1.0;
-            driveMoveToRelativePosition(90, 90,
+            driveMoveToRelativePosition(180, 180,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m*-46, m*46,
+            driveMoveToRelativePosition(m*-92, m*92,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(900, 900,
+                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToRelativePosition(m*220, m*-220,
                     Constants.DRIVE_SPEED_TO_PARK);
             driveMoveToRelativePosition(450, 450,
-                    Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m*110, m*-110,
-                    Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(225, 225,
                     Constants.DRIVE_SPEED_TO_PARK);
         }
 
