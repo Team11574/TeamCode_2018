@@ -95,7 +95,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private int winchCalculateEncoderCounts(double mm) {
-        return (int) (mm / Constants.WINCH_ENCODER_COUNTS_PER_MM);
+        return (int) (mm * Constants.WINCH_ENCODER_COUNTS_PER_MM);
     }
 
     private void winchMoveToRelativePosition(double position_mm, double speed) {
@@ -118,7 +118,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private int driveCalculateEncoderCounts(double mm) {
-        return (int) (mm / Constants.DRIVE_ENCODER_COUNTS_PER_MM);
+        return (int) (mm * Constants.DRIVE_ENCODER_COUNTS_PER_MM);
     }
 
     private void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
