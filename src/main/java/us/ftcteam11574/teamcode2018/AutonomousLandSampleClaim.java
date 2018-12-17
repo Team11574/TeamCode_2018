@@ -2,6 +2,7 @@ package us.ftcteam11574.teamcode2018;
 
 import android.os.Environment;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -28,6 +30,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
     private DigitalChannel mWLd;
+    private BNO055IMU imu;
 
     GoldMineralLocator goldMineralLocator;
     GoldMineralPipeline goldMineralPipeline;
@@ -53,6 +56,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         goldMineralPipeline.init(hardwareMap.appContext,
                 CameraViewDisplay.getInstance());
         goldMineralPipeline.enable();
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
         mL = hardwareMap.dcMotor.get("mL");
         mL.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -122,6 +130,8 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
+        mL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        mR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mL.setTargetPosition(mL.getCurrentPosition() + driveCalculateEncoderCounts(l_position_mm));
         mR.setTargetPosition(mR.getCurrentPosition() + driveCalculateEncoderCounts(r_position_mm));
         mL.setPower(power);
@@ -149,6 +159,34 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         if (isStopRequested())
             robotStopAllMotion();
     }
+
+    private double getAngle() {
+        return -imu.getAngularOrientation().firstAngle;
+    }
+
+    private void driveMoveToAngle(double angle, double power) {
+        if (angle < getAngle()) power = -power;
+        mL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mL.setPower(power);
+        mR.setPower(-power);
+
+        while (!isStopRequested()) {
+            final double currentAngle = getAngle();
+            if (power > 0 && currentAngle >= angle) {
+                break;
+            }
+            if (power < 0 && currentAngle <= angle) {
+                break;
+            }
+
+            telemetry.addData("Current", currentAngle);
+            telemetry.addData("Target", angle);
+            telemetry.update();
+        }
+        robotStopAllMotion();
+    }
+
 
     private void hingeUnlatch(){
         sH.setPosition(Constants.LATCH_SERVO_OPEN);
@@ -190,12 +228,10 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
                 m = -1.0;
             driveMoveToRelativePosition(180, 180,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m*-92, m*92,
-                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToAngle(m * -25.0, 0.5);
             driveMoveToRelativePosition(900, 900,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m*220, m*-220,
-                    Constants.DRIVE_SPEED_TO_PARK);
+            driveMoveToAngle(m * 35.0, 0.5);
             driveMoveToRelativePosition(450, 450,
                     Constants.DRIVE_SPEED_TO_PARK);
         }
