@@ -3,14 +3,17 @@ package us.ftcteam11574.teamcode2018;
 import android.os.Environment;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -31,6 +34,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     private Servo sH;
     private DigitalChannel mWLd;
     private BNO055IMU imu;
+
+    private Rev2mDistanceSensor drr;
+    private Rev2mDistanceSensor drf;
+    private Rev2mDistanceSensor df;
+
 
     GoldMineralLocator goldMineralLocator;
     GoldMineralPipeline goldMineralPipeline;
@@ -56,6 +64,10 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         goldMineralPipeline.init(hardwareMap.appContext,
                 CameraViewDisplay.getInstance());
         goldMineralPipeline.enable();
+
+        drr = hardwareMap.get(Rev2mDistanceSensor.class , "drr");
+        drf = hardwareMap.get(Rev2mDistanceSensor.class , "drf");
+        df =  hardwareMap.get(Rev2mDistanceSensor.class , "df");
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -187,6 +199,72 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         robotStopAllMotion();
     }
 
+    private double getDistanceFromFront() {
+        return df.getDistance(DistanceUnit.MM) - 50.0;
+    }
+    private double getDistanceFromRightFront() {
+        return drf.getDistance(DistanceUnit.MM) - 48.0;
+    }
+    private double getDistanceFromRightRear() {
+        return drr.getDistance(DistanceUnit.MM) - 50.0;
+    }
+    private double getSkew( double distance) {
+        double f=getDistanceFromRightFront();
+        double r=getDistanceFromRightRear();
+        double d=r-f;
+        double s = (f - distance)/ distance / 8.0;
+        return Range.clip(d/(Math.min(f,r)/2.0) - s, -1.0, 1.0);
+    }
+
+    private void driveToDistance(double distance, double power) {
+        mL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mL.setPower(power);
+        mR.setPower(power);
+
+        while (!isStopRequested()) {
+            final double currentDistance = df.getDistance(DistanceUnit.MM);
+            if (currentDistance <= distance) {
+                break;
+            }
+
+            telemetry.addData("Current", currentDistance);
+            telemetry.addData("Target", distance);
+            telemetry.update();
+        }
+        robotStopAllMotion();
+    }
+
+    private void driveToDistanceParallelToWall(double distanceAhead, double distanceFromWall, double power) {
+        mL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        while (!isStopRequested()) {
+            final double currentDistance = df.getDistance(DistanceUnit.MM);
+            final double currentSkew = getSkew(distanceFromWall);
+            if (currentDistance <= distanceAhead) {
+                break;
+            }
+
+            if (currentSkew > 0) {
+                mR.setPower(power);
+                mL.setPower(power * (1.0 - currentSkew));
+            } else if (currentSkew < 0) {
+                mR.setPower(power * (1.0 + currentSkew));
+                mL.setPower(power);
+            } else {
+                mL.setPower(power);
+                mR.setPower(power);
+            }
+
+            telemetry.addData("Current", currentDistance);
+            telemetry.addData("Target", distanceAhead);
+            telemetry.addData("skew",currentSkew);
+            telemetry.addData("wall", getDistanceFromRightFront());
+            telemetry.update();
+        }
+        robotStopAllMotion();
+    }
 
     private void hingeUnlatch(){
         sH.setPosition(Constants.LATCH_SERVO_OPEN);
