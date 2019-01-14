@@ -174,7 +174,7 @@ public class SavedAutonomousLandSampleClaim extends LinearOpMode {
         hingeUnlatch();
 
         // winch hinge down a bit to release from lander
-        winchMoveToRelativePosition(-250, Constants.WINCH_SPEED_FAST);
+        winchMoveToRelativePosition(-100, Constants.WINCH_SPEED_FAST);
 
         GoldMineralLocator.MineralPosition mineralPosition =
                 goldMineralLocator.getLastKnownGoldMineralPosition();
@@ -190,7 +190,7 @@ public class SavedAutonomousLandSampleClaim extends LinearOpMode {
                 m = -1.0;
             driveMoveToRelativePosition(180, 180,
                     Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m*-92, m*92,
+            driveMoveToRelativePosition(m*-100, m*100,
                     Constants.DRIVE_SPEED_TO_PARK);
             driveMoveToRelativePosition(900, 900,
                     Constants.DRIVE_SPEED_TO_PARK);
