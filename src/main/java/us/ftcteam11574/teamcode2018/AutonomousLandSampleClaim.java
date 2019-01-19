@@ -185,22 +185,24 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
 
         while (shouldKeepRunning()) {
-           if (r_position_mm > 0.0 && mR.getCurrentPosition() >= MrTargetPosition)
+            int MrCurrentPosition = mR.getCurrentPosition();
+            int MlCurrentPosition = mL.getCurrentPosition();
+            if (r_position_mm > 0.0 && MrCurrentPosition >= MrTargetPosition)
                 break;
 
-            if (r_position_mm < 0.0 && mR.getCurrentPosition() <= MrTargetPosition)
+            if (r_position_mm < 0.0 && MrCurrentPosition <= MrTargetPosition)
                 break;
 
-            if (l_position_mm > 0.0 && mL.getCurrentPosition() >= MlTargetPosition)
+            if (l_position_mm > 0.0 && MlCurrentPosition >= MlTargetPosition)
                 break;
 
-            if (l_position_mm < 0.0 && mL.getCurrentPosition() <= MlTargetPosition)
+            if (l_position_mm < 0.0 && MlCurrentPosition <= MlTargetPosition)
                 break;
 
-            telemetry.addData("mR Current", mR.getCurrentPosition());
-            telemetry.addData("mR Target", mR.getTargetPosition());
-            telemetry.addData("mL Current", mL.getCurrentPosition());
-            telemetry.addData("mL Target", mL.getTargetPosition());
+            telemetry.addData("mR Current", MrCurrentPosition);
+            telemetry.addData("mR Target", MrTargetPosition);
+            telemetry.addData("mL Current", MlCurrentPosition);
+            telemetry.addData("mL Target", MlTargetPosition);
             telemetry.update();
         }
 
