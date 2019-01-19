@@ -28,6 +28,7 @@ import java.util.Locale;
 
 import us.jcole.opencv.GoldMineralLocator;
 import us.jcole.opencvpipeline.GoldMineralPipeline;
+import us.jcole.periodicsensor.PeriodicRev2mDistanceSensor;
 
 @SuppressWarnings({"unused"})
 @Autonomous
@@ -37,9 +38,9 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     private DigitalChannel mWLd;
     private BNO055IMU imu;
 
-    private Rev2mDistanceSensor drr;
-    private Rev2mDistanceSensor drf;
-    private Rev2mDistanceSensor df;
+    private PeriodicRev2mDistanceSensor drr;
+    private PeriodicRev2mDistanceSensor drf;
+    private PeriodicRev2mDistanceSensor df;
 
 
     GoldMineralLocator goldMineralLocator;
@@ -89,9 +90,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
                 CameraViewDisplay.getInstance());
         goldMineralPipeline.enable();
 
-        drr = hardwareMap.get(Rev2mDistanceSensor.class , "drr");
-        drf = hardwareMap.get(Rev2mDistanceSensor.class , "drf");
-        df =  hardwareMap.get(Rev2mDistanceSensor.class , "df");
+        drr = new PeriodicRev2mDistanceSensor(hardwareMap, "drr", 50);
+        df = new PeriodicRev2mDistanceSensor(hardwareMap, "df", 50);
+        drf = new PeriodicRev2mDistanceSensor(hardwareMap, "drf", 50);
+
+
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -237,13 +240,12 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private double getDistanceFromFront() {
-        return df.getDistance(DistanceUnit.MM) - 50.0;
-    }
+        return df.getValue() - 50.0;    }
     private double getDistanceFromRightFront() {
-        return drf.getDistance(DistanceUnit.MM) - 48.0;
+        return drf.getValue() - 48.0;
     }
     private double getDistanceFromRightRear() {
-        return drr.getDistance(DistanceUnit.MM) - 50.0;
+        return drr.getValue() - 50.0;
     }
     private double getSkew( double distance) {
         double f=getDistanceFromRightFront();
@@ -254,12 +256,15 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void driveToDistance(double distance, double power) {
+        info("Driving Straight " + distance);
         mL.setPower(power);
         mR.setPower(power);
 
         while (shouldKeepRunning()) {
-            double currentDistance = df.getDistance(DistanceUnit.MM);
+            double currentDistance = df.getValue();
             if (currentDistance <= distance) {
+                info("Reached Distance " + currentDistance
+                );
                 break;
             }
 
@@ -276,7 +281,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(power);
 
         while (shouldKeepRunning()) {
-            double currentDistance = drf.getDistance(DistanceUnit.MM);
+            double currentDistance = drf.getValue();
             if (currentDistance <= distance) {
                 break;
             }
@@ -296,7 +301,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         //        distanceAhead, distanceFromWall, power));
 
         while (shouldKeepRunning()) {
-            double currentDistance = df.getDistance(DistanceUnit.MM);
+            double currentDistance = df.getValue();
             double currentSkew = getSkew(distanceFromWall);
             if (currentDistance <= distanceAhead) {
                 break;
@@ -321,7 +326,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         }
         mL.setPower(0.0);
         mR.setPower(0.0);
-        info("Drive: stopped at " + df.getDistance(DistanceUnit.MM) + "mm");
+        info("Drive: stopped at " + df.getValue() + "mm");
     }
 
     private void driveDistanceParallelToWallUsingEncoders(double distance, double distanceFromWall, double power) {
@@ -401,7 +406,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         driveMoveToAngle(25, 0.5);
         driveMoveToRelativePosition(500, 500, 0.5);
         driveMoveToRelativePosition(-325, -325, 0.5);
-        driveMoveToAngle(-75, 0.5);
+        driveMoveToAngle(-65, 0.5);
         waitTime(250);
 
         driveToDistance(650, 0.75);
@@ -449,7 +454,14 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
                     goldMineralLocator.getCurrentGoldMineralPosition());
             telemetry.addData("Last Known Position",
                     goldMineralLocator.getLastKnownGoldMineralPosition());
+            telemetry.addData("df", df.getValue());
+            telemetry.addData("drf", drf.getValue());
+            telemetry.addData("drr", drr.getValue());
             telemetry.update();
+        }
+
+        if (isStopRequested()) {
+            return;
         }
 
         info("Starting Program " + getClass().getName());
