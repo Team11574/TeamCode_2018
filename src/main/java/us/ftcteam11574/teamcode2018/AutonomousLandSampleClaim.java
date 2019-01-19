@@ -166,15 +166,17 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
+        int MrTargetPosition = 0;
+        int MlTargetPosition = 0;
         if (l_position_mm != 0.0) {
-            mL.setTargetPosition(mL.getCurrentPosition() + driveCalculateEncoderCounts(l_position_mm));
+            MlTargetPosition = mL.getCurrentPosition() + driveCalculateEncoderCounts(l_position_mm);
             mL.setPower(power * Math.signum(l_position_mm));
         } else {
             mL.setPower(0.0);
         }
 
         if (r_position_mm != 0.0) {
-            mR.setTargetPosition(mR.getCurrentPosition() + driveCalculateEncoderCounts(r_position_mm));
+            MrTargetPosition = mR.getCurrentPosition() + driveCalculateEncoderCounts(r_position_mm);
             mR.setPower(power * Math.signum(r_position_mm));
         }
         else {
@@ -183,16 +185,16 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
 
         while (shouldKeepRunning()) {
-            if (r_position_mm > 0.0 && mR.getCurrentPosition() >= mR.getTargetPosition())
+           if (r_position_mm > 0.0 && mR.getCurrentPosition() >= MrTargetPosition)
                 break;
 
-            if (r_position_mm < 0.0 && mR.getCurrentPosition() <= mR.getTargetPosition())
+            if (r_position_mm < 0.0 && mR.getCurrentPosition() <= MrTargetPosition)
                 break;
 
-            if (l_position_mm > 0.0 && mL.getCurrentPosition() >= mL.getTargetPosition())
+            if (l_position_mm > 0.0 && mL.getCurrentPosition() >= MlTargetPosition)
                 break;
 
-            if (l_position_mm < 0.0 && mL.getCurrentPosition() <= mL.getTargetPosition())
+            if (l_position_mm < 0.0 && mL.getCurrentPosition() <= MlTargetPosition)
                 break;
 
             telemetry.addData("mR Current", mR.getCurrentPosition());
