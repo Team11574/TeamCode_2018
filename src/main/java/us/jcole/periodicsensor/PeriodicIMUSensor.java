@@ -3,10 +3,10 @@ package us.jcole.periodicsensor;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-class PeriodicIMUSensor extends PeriodicSensor {
+public class PeriodicIMUSensor extends PeriodicSensor {
     private BNO055IMU mSensor;
 
-    PeriodicIMUSensor(HardwareMap hardwareMap, String deviceName, int collectionPeriod) {
+    public PeriodicIMUSensor(HardwareMap hardwareMap, String deviceName, int collectionPeriod) {
         super(hardwareMap, deviceName, collectionPeriod);
     }
 

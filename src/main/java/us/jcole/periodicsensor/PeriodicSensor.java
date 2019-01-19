@@ -12,7 +12,7 @@ abstract class PeriodicSensor {
     private ElapsedTime mAge;
     private ElapsedTime mCollectionTimer;
     private double mLastCollectionTime;
-    private boolean mPaused = true;
+    private boolean mPaused = false;
     private boolean mRunning = true;
 
     protected abstract void initializeSensor(final HardwareMap hardwareMap, final String deviceName);

@@ -5,10 +5,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-class PeriodicRev2mDistanceSensor extends PeriodicSensor {
+public class PeriodicRev2mDistanceSensor extends PeriodicSensor {
     private Rev2mDistanceSensor mSensor;
 
-    PeriodicRev2mDistanceSensor(HardwareMap hardwareMap, String deviceName, int collectionPeriod) {
+    public PeriodicRev2mDistanceSensor(HardwareMap hardwareMap, String deviceName, int collectionPeriod) {
         super(hardwareMap, deviceName, collectionPeriod);
     }
 
