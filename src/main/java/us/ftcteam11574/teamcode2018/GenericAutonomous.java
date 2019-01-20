@@ -4,8 +4,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -15,8 +13,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.corningrobotics.enderbots.endercv.CameraViewDisplay;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -31,8 +27,7 @@ import us.jcole.opencvpipeline.GoldMineralPipeline;
 import us.jcole.periodicsensor.PeriodicRev2mDistanceSensor;
 
 @SuppressWarnings({"unused"})
-@Autonomous
-public class AutonomousLandSampleClaim extends LinearOpMode {
+abstract public class GenericAutonomous extends LinearOpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
     private DigitalChannel mWLd;
@@ -41,6 +36,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     private PeriodicRev2mDistanceSensor drr;
     private PeriodicRev2mDistanceSensor drf;
     private PeriodicRev2mDistanceSensor df;
+    private PeriodicRev2mDistanceSensor dd;
 
 
     GoldMineralLocator goldMineralLocator;
@@ -93,6 +89,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         drr = new PeriodicRev2mDistanceSensor(hardwareMap, "drr", 50);
         df = new PeriodicRev2mDistanceSensor(hardwareMap, "df", 50);
         drf = new PeriodicRev2mDistanceSensor(hardwareMap, "drf", 50);
+        dd = new PeriodicRev2mDistanceSensor(hardwareMap, "dd", 50);
 
 
 
@@ -133,7 +130,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mW.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    private void winchMoveToZero() {
+    void winchMoveToZero() {
         info("Winch: moving to zero");
         while (mWLd.getState() == false) {
             mW.setPower(-0.6);
@@ -142,11 +139,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         info("Winch: reached zero");
     }
 
-    private int winchCalculateEncoderCounts(double mm) {
+    int winchCalculateEncoderCounts(double mm) {
         return (int) (mm * Constants.WINCH_ENCODER_COUNTS_PER_MM);
     }
 
-    private void winchMoveToRelativePosition(double position_mm, double speed) {
+    void winchMoveToRelativePosition(double position_mm, double speed) {
         int TargetPosition = mW.getCurrentPosition() + winchCalculateEncoderCounts(position_mm);
         mW.setPower(0.6 * Math.signum(position_mm));
 
@@ -165,11 +162,20 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mW.setPower(0.0);
     }
 
+    void winchLowerRobot() {
+        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        //TODO may change with limit switch position
+        winchMoveToRelativePosition (425, Constants.WINCH_SPEED_FAST);
+        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        waitTime(250);
+
+    }
+
     private int driveCalculateEncoderCounts(double mm) {
         return (int) (mm * Constants.DRIVE_ENCODER_COUNTS_PER_MM);
     }
 
-    private void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
+    void driveMoveToRelativePosition(double l_position_mm, double r_position_mm, double power) {
         int MrTargetPosition = 0;
         int MlTargetPosition = 0;
         if (l_position_mm != 0.0) {
@@ -214,11 +220,11 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(0.0);
     }
 
-    private double getAngle() {
+    double getAngle() {
         return -imu.getAngularOrientation().firstAngle;
     }
 
-    private void driveMoveToAngle(double angle, double power) {
+    void driveMoveToAngle(double angle, double power) {
         if (angle < getAngle()) power = -power;
         mL.setPower(power);
         mR.setPower(-power);
@@ -240,15 +246,19 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(0.0);
     }
 
-    private double getDistanceFromFront() {
+    double getDistanceFromFront() {
         return df.getValue() - 50.0;    }
-    private double getDistanceFromRightFront() {
+    double getDistanceFromRightFront() {
         return drf.getValue() - 48.0;
     }
-    private double getDistanceFromRightRear() {
+    double getDistanceFromRightRear() {
         return drr.getValue() - 50.0;
     }
-    private double getSkew( double distance) {
+    double getDistanceDiagonal() {
+        return dd.getValue() - 135.0;
+    }
+
+    double getSkew( double distance) {
         double f=getDistanceFromRightFront();
         double r=getDistanceFromRightRear();
         double d=r-f;
@@ -256,7 +266,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         return Range.clip(d/(Math.min(f,r)/2.0) - s, -1.0, 1.0);
     }
 
-    private void driveToDistance(double distance, double power) {
+    void driveToDistance(double distance, double power) {
         info("Driving Straight " + distance);
         mL.setPower(power);
         mR.setPower(power);
@@ -277,7 +287,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(0.0);
     }
 
-    private void driveToDistanceUsingSideSensor(double distance, double power) {
+    void driveToDistanceUsingSideSensor(double distance, double power) {
         mL.setPower(power);
         mR.setPower(power);
 
@@ -295,14 +305,14 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(0.0);
     }
 
-    private void driveToDistanceParallelToWall(double distanceAhead, double distanceFromWall, double power) {
+    void driveToDistanceParallelToWall(double distanceAhead, double distanceFromWall, double power) {
         info("Drive: parallel to wall");
         //info("Drive: parallel to wall distanceAhead = " + distanceAhead + " distanceFromWall = " + distanceFromWall + " power = " + power);
         //info(String.format(Locale.US, "Drive: parallel to wall distanceAhead = %.2f distanceFromWall = %.2f power = %.2f",
         //        distanceAhead, distanceFromWall, power));
 
         while (shouldKeepRunning()) {
-            double currentDistance = df.getValue();
+            double currentDistance = getDistanceFromFront();
             double currentSkew = getSkew(distanceFromWall);
             if (currentDistance <= distanceAhead) {
                 break;
@@ -330,7 +340,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         info("Drive: stopped at " + df.getValue() + "mm");
     }
 
-    private void driveDistanceParallelToWallUsingEncoders(double distance, double distanceFromWall, double power) {
+    void driveDistanceParallelToWallUsingEncoders(double distance, double distanceFromWall, double power) {
         int MlTargetPosition = mL.getCurrentPosition() + driveCalculateEncoderCounts(distance);
         int MrTargetPosition = mR.getCurrentPosition() + driveCalculateEncoderCounts(distance);
 
@@ -361,15 +371,15 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         mR.setPower(0.0);
     }
 
-    private void hingeUnlatch(){
+    void hingeUnlatch(){
         sH.setPosition(Constants.LATCH_SERVO_OPEN);
     }
 
-    private void hingeLatch(){
+    void hingeLatch(){
         sH.setPosition(Constants.LATCH_SERVO_OPEN);
     }
 
-    private void waitTime(double ms) {
+    void waitTime(double ms) {
         info("Wait started ms = " + ms);
         ElapsedTime elapsedTime = new ElapsedTime();
         while (shouldKeepRunning() && elapsedTime.milliseconds() < ms) {
@@ -378,21 +388,12 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
         info("Wait ended");
     }
 
-    private void robotRun(){
-        GoldMineralLocator.MineralPosition mineralPosition =
-                goldMineralLocator.getLastKnownGoldMineralPosition();
-
-        info("Last known mineral position " + mineralPosition);
-
+    void robotDetachRobotFromLander() {
         info("Step: winch up a small amount to release the latch");
         winchMoveToZero();
 
         info("Step: winch all the way down (mostly by gravity)");
-        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        //TODO may change with limit switch position
-        winchMoveToRelativePosition (425, Constants.WINCH_SPEED_FAST);
-        mW.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        waitTime(250);
+        winchLowerRobot();
 
         info("Step: back up drive motors a bit to straighten against lander)");
         driveMoveToRelativePosition(-70, -70, Constants.DRIVE_SPEED_DETACH);
@@ -402,47 +403,9 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
 
         info("Step: winch hinge down a bit to release from lander");
         winchMoveToRelativePosition(-100, Constants.WINCH_SPEED_FAST);
-
-        driveMoveToRelativePosition(300, 300, 0.5);
-        driveMoveToAngle(25, 0.5);
-        driveMoveToRelativePosition(500, 500, 0.5);
-        driveMoveToRelativePosition(-325, -325, 0.5);
-        driveMoveToAngle(-65, 0.5);
-        waitTime(250);
-
-        driveToDistance(650, 0.75);
-        //driveMoveToRelativePosition(0, 100, 1.0);
-        driveMoveToAngle(getAngle() - 10, 0.5);
-        driveToDistanceUsingSideSensor(70, 0.5);
-        //driveMoveToRelativePosition(0, 100, 1.0);
-        driveMoveToAngle(getAngle() -10, 0.5);
-        driveToDistanceParallelToWall(550, 70, 1.0);
-        winchMoveToZero();
-        double distanceFromWall = getDistanceFromFront();
-        driveDistanceParallelToWallUsingEncoders(-(1500 - distanceFromWall), 70, -1.0);
-
-
-       /* if (mineralPosition == GoldMineralLocator.MineralPosition.UNKNOWN ||
-                mineralPosition == GoldMineralLocator.MineralPosition.CENTER) {
-            driveMoveToRelativePosition(1100, 1100,
-                    Constants.DRIVE_SPEED_TO_PARK);
-        } else if (mineralPosition == GoldMineralLocator.MineralPosition.LEFT ||
-                mineralPosition==GoldMineralLocator.MineralPosition.RIGHT) {
-            double m = 1.0;
-            if (mineralPosition == GoldMineralLocator.MineralPosition.RIGHT)
-                m = -1.0;
-            driveMoveToRelativePosition(180, 180, Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m * -170, m * 170, Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(850, 850, Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(m * 250, m * -250, Constants.DRIVE_SPEED_TO_PARK);
-            driveMoveToRelativePosition(450, 450, Constants.DRIVE_SPEED_TO_PARK);
-        }
-        */
-
-        // winch down below horizontal to drop the team marker
-        winchMoveToZero();
-
     }
+
+    abstract void robotRun();
 
     @Override
     public void runOpMode() {
@@ -461,14 +424,14 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
             telemetry.update();
         }
 
+        // Turn off the pipeline and keep whatever the last thing we saw was.
+        goldMineralPipeline.disable();
+
         if (isStopRequested()) {
             return;
         }
 
         info("Starting Program " + getClass().getName());
-
-        // Turn off the pipeline and keep whatever the last thing we saw was.
-        goldMineralPipeline.disable();
 
         // Generate a prefix so that all images saved have the same prefix.
         String savedImagePrefix = SAVED_IMAGE_DATE_FORMAT.format(new Date());
@@ -493,6 +456,7 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
             if (t instanceof StopImmediatelyException) {
                 info("Stop requested!");
                 robotStopAllMotion();
+                goldMineralPipeline.disable();
                 return;
             }
 

@@ -11,12 +11,14 @@ public class TestDistances extends OpMode {
     private Rev2mDistanceSensor drr;
     private Rev2mDistanceSensor drf;
     private Rev2mDistanceSensor df;
+    private Rev2mDistanceSensor dd;
 
     @Override
     public void init() {
         drr = hardwareMap.get(Rev2mDistanceSensor.class , "drr");
         drf = hardwareMap.get(Rev2mDistanceSensor.class , "drf");
         df =  hardwareMap.get(Rev2mDistanceSensor.class , "df");
+        dd = hardwareMap.get(Rev2mDistanceSensor.class , "dd");
 
 
     }
@@ -26,6 +28,7 @@ public class TestDistances extends OpMode {
         telemetry.addData("drr" , drr.getDistance(DistanceUnit.MM));
         telemetry.addData("drf", drf.getDistance(DistanceUnit.MM));
         telemetry.addData("df" , df.getDistance(DistanceUnit.MM));
+        telemetry.addData("dd" , dd.getDistance(DistanceUnit.MM));
         telemetry.update();
 
 
