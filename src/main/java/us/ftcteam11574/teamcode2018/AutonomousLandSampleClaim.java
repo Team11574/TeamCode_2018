@@ -147,18 +147,19 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void winchMoveToRelativePosition(double position_mm, double speed) {
-        mW.setTargetPosition(mW.getCurrentPosition() + winchCalculateEncoderCounts(position_mm));
+        int TargetPosition = mW.getCurrentPosition() + winchCalculateEncoderCounts(position_mm);
         mW.setPower(0.6 * Math.signum(position_mm));
 
         while (shouldKeepRunning()) {
-            if (position_mm > 0.0 && mW.getCurrentPosition() >= mW.getTargetPosition())
+            int currentPosition = mW.getCurrentPosition();
+            if (position_mm > 0.0 && currentPosition >= TargetPosition)
                 break;
 
-            if (position_mm < 0.0 && mW.getCurrentPosition() <= mW.getTargetPosition())
+            if (position_mm < 0.0 && currentPosition <= TargetPosition)
                 break;
 
-            telemetry.addData("mW Current", mW.getCurrentPosition());
-            telemetry.addData("mW Target", mW.getTargetPosition());
+            telemetry.addData("mW Current", currentPosition);
+            telemetry.addData("mW Target", TargetPosition);
             telemetry.update();
         }
         mW.setPower(0.0);
@@ -330,16 +331,16 @@ public class AutonomousLandSampleClaim extends LinearOpMode {
     }
 
     private void driveDistanceParallelToWallUsingEncoders(double distance, double distanceFromWall, double power) {
-        mL.setTargetPosition(driveCalculateEncoderCounts(distance));
-        mR.setTargetPosition(driveCalculateEncoderCounts(distance));
+        int MlTargetPosition = mL.getCurrentPosition() + driveCalculateEncoderCounts(distance);
+        int MrTargetPosition = mR.getCurrentPosition() + driveCalculateEncoderCounts(distance);
 
         // TODO ONLY WORKS IN REVERSE
         while (shouldKeepRunning()) {
             double currentSkew = getSkew(distanceFromWall);
-            if (distance < 0 && mL.getCurrentPosition() <= mL.getTargetPosition())
+            if (distance < 0 && mL.getCurrentPosition() <= MlTargetPosition)
                 break;
 
-            if (distance < 0 && mR.getCurrentPosition() <= mR.getTargetPosition())
+            if (distance < 0 && mR.getCurrentPosition() <= MrTargetPosition)
                 break;
 
             if (currentSkew > 0) {
