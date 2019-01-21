@@ -258,12 +258,11 @@ abstract public class GenericAutonomous extends LinearOpMode {
         return dd.getValue() - 135.0;
     }
 
-    double getSkew( double distance) {
+    double getSkew() {
         double f=getDistanceFromRightFront();
         double r=getDistanceFromRightRear();
-        double d=r-f;
-        double s = (f - distance)/ distance / 8.0;
-        return Range.clip(d/(Math.min(f,r)/2.0) - s, -1.0, 1.0);
+        double d = r - f;
+        return Range.clip(d / 100.0, -1.0, 1.0);
     }
 
     void driveToDistance(double distance, double power) {
@@ -272,7 +271,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
         mR.setPower(power);
 
         while (shouldKeepRunning()) {
-            double currentDistance = df.getValue();
+            double currentDistance = getDistanceFromFront();
             if (currentDistance <= distance) {
                 info("Reached Distance " + currentDistance
                 );
@@ -286,6 +285,28 @@ abstract public class GenericAutonomous extends LinearOpMode {
         mL.setPower(0.0);
         mR.setPower(0.0);
     }
+
+    void driveToDiagonalDistance(double distance, double power) {
+        info("Driving Straight " + distance);
+        mL.setPower(power);
+        mR.setPower(power);
+
+        while (shouldKeepRunning()) {
+            double currentDistance = getDistanceDiagonal();
+            if (currentDistance <= distance) {
+                info("Reached Distance " + currentDistance
+                );
+                break;
+            }
+
+            telemetry.addData("Current", currentDistance);
+            telemetry.addData("Target", distance);
+            telemetry.update();
+        }
+        mL.setPower(0.0);
+        mR.setPower(0.0);
+    }
+
 
     void driveToDistanceUsingSideSensor(double distance, double power) {
         mL.setPower(power);
@@ -312,27 +333,38 @@ abstract public class GenericAutonomous extends LinearOpMode {
         //        distanceAhead, distanceFromWall, power));
 
         while (shouldKeepRunning()) {
-            double currentDistance = getDistanceFromFront();
-            double currentSkew = getSkew(distanceFromWall);
-            if (currentDistance <= distanceAhead) {
+            double currentDistanceAhead = getDistanceFromFront();
+
+            if (currentDistanceAhead <= distanceAhead) {
                 break;
             }
 
+            double currentSkew = getSkew();
+            double currentDistanceFromWall =
+                    (getDistanceFromRightFront() + getDistanceFromRightRear()) / 2.0;
+
+            double mL_power = power;
+            double mR_power = power;
+
             if (currentSkew > 0) {
-                mR.setPower(power);
-                mL.setPower(power * (1.0 - currentSkew));
+                mL_power *= (1.0 - Math.abs(currentSkew));
             } else if (currentSkew < 0) {
-                mR.setPower(power * (1.0 + currentSkew));
-                mL.setPower(power);
-            } else {
-                mL.setPower(power);
-                mR.setPower(power);
+                mR_power *= (1.0 - Math.abs(currentSkew));
             }
 
-            telemetry.addData("Current", currentDistance);
+            if (currentDistanceFromWall < distanceFromWall) {
+                mL_power *= 0.5;
+            } else if (currentDistanceFromWall > distanceFromWall) {
+                mR_power *= 0.5;
+            }
+
+            mL.setPower(mL_power);
+            mR.setPower(mR_power);
+
+            telemetry.addData("Current", currentDistanceAhead);
             telemetry.addData("Target", distanceAhead);
             telemetry.addData("skew",currentSkew);
-            telemetry.addData("wall", getDistanceFromRightFront());
+            telemetry.addData("wall", currentDistanceFromWall);
             telemetry.update();
         }
         mL.setPower(0.0);
@@ -343,26 +375,37 @@ abstract public class GenericAutonomous extends LinearOpMode {
     void driveDistanceParallelToWallUsingEncoders(double distance, double distanceFromWall, double power) {
         int MlTargetPosition = mL.getCurrentPosition() + driveCalculateEncoderCounts(distance);
         int MrTargetPosition = mR.getCurrentPosition() + driveCalculateEncoderCounts(distance);
+        info("Distance from wall =  " + distanceFromWall);
 
         // TODO ONLY WORKS IN REVERSE
         while (shouldKeepRunning()) {
-            double currentSkew = getSkew(distanceFromWall);
             if (distance < 0 && mL.getCurrentPosition() <= MlTargetPosition)
                 break;
 
             if (distance < 0 && mR.getCurrentPosition() <= MrTargetPosition)
                 break;
 
-            if (currentSkew > 0) {
-                mR.setPower(power * (1.0 - currentSkew/2.0));
-                mL.setPower(power);
-            } else if (currentSkew < 0) {
-                mR.setPower(power);
-                mL.setPower(power * (1.0 + currentSkew/2.0));
-            } else {
-                mL.setPower(power);
-                mR.setPower(power);
+            double currentSkew = getSkew();
+            double currentDistanceFromWall =
+                    (getDistanceFromRightFront() + getDistanceFromRightRear()) / 2.0;
+
+            double mL_power = power * Math.signum(distance);
+            double mR_power = power * Math.signum(distance);
+
+            if (currentSkew < 0) {
+                mL_power *= (1.0 - Math.abs(currentSkew));
+            } else if (currentSkew > 0) {
+                mR_power *= (1.0 - Math.abs(currentSkew));
             }
+
+            if (currentDistanceFromWall < distanceFromWall) {
+                mL_power *= 0.5;
+            } else if (currentDistanceFromWall > distanceFromWall) {
+                mR_power *= 0.5;
+            }
+
+            mL.setPower(mL_power);
+            mR.setPower(mR_power);
 
             telemetry.addData("skew",currentSkew);
             telemetry.update();
@@ -396,7 +439,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
         winchLowerRobot();
 
         info("Step: back up drive motors a bit to straighten against lander)");
-        driveMoveToRelativePosition(-70, -70, Constants.DRIVE_SPEED_DETACH);
+        driveMoveToRelativePosition(-80, -80, Constants.DRIVE_SPEED_DETACH);
 
         info("Step: unlatch from lander");
         hingeUnlatch();
