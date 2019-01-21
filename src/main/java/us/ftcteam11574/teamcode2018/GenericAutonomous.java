@@ -258,11 +258,19 @@ abstract public class GenericAutonomous extends LinearOpMode {
         return dd.getValue() - 135.0;
     }
 
+    double getDistanceFromWall() {
+        return (getDistanceFromRightFront() + getDistanceFromRightRear()) / 2.0;
+    }
+
     double getSkew() {
         double f=getDistanceFromRightFront();
         double r=getDistanceFromRightRear();
         double d = r - f;
         return Range.clip(d / 100.0, -1.0, 1.0);
+    }
+
+    double getDistanceCorrection(double desiredDistance, double currentDistance) {
+        return Range.clip((currentDistance - desiredDistance) / 100.0, -0.1, 0.1);
     }
 
     void driveToDistance(double distance, double power) {
@@ -346,16 +354,20 @@ abstract public class GenericAutonomous extends LinearOpMode {
             double mL_power = power;
             double mR_power = power;
 
-            if (currentSkew > 0) {
-                mL_power *= (1.0 - Math.abs(currentSkew));
-            } else if (currentSkew < 0) {
-                mR_power *= (1.0 - Math.abs(currentSkew));
-            }
 
-            if (currentDistanceFromWall < distanceFromWall) {
-                mL_power *= 0.5;
-            } else if (currentDistanceFromWall > distanceFromWall) {
-                mR_power *= 0.5;
+            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromRightFront());
+
+            if (currentDistanceCorrection < 0.1) {
+                mL_power *= 1.0 - Math.abs(currentDistanceCorrection);
+            } else if (currentDistanceCorrection > 0.1) {
+                mR_power *= 1.0 - Math.abs(currentDistanceCorrection);
+            } else {
+                if (currentSkew > 0) {
+                    mL_power *= (1.0 - Math.abs(currentSkew));
+                } else if (currentSkew < 0) {
+                    mR_power *= (1.0 - Math.abs(currentSkew));
+                }
+
             }
 
             mL.setPower(mL_power);
@@ -392,16 +404,20 @@ abstract public class GenericAutonomous extends LinearOpMode {
             double mL_power = power * Math.signum(distance);
             double mR_power = power * Math.signum(distance);
 
-            if (currentSkew < 0) {
-                mL_power *= (1.0 - Math.abs(currentSkew));
-            } else if (currentSkew > 0) {
-                mR_power *= (1.0 - Math.abs(currentSkew));
-            }
 
-            if (currentDistanceFromWall < distanceFromWall) {
-                mL_power *= 0.5;
-            } else if (currentDistanceFromWall > distanceFromWall) {
-                mR_power *= 0.5;
+            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromRightRear());
+
+            if (currentDistanceCorrection < 0.1) {
+                mL_power *= 1.0 - Math.abs(currentDistanceCorrection);
+            } else if (currentDistanceCorrection > 0.1) {
+                mR_power *= 1.0 - Math.abs(currentDistanceCorrection);
+            } else {
+                if (currentSkew < 0) {
+                    mL_power *= (1.0 - Math.abs(currentSkew));
+                } else if (currentSkew > 0) {
+                    mR_power *= (1.0 - Math.abs(currentSkew));
+                }
+
             }
 
             mL.setPower(mL_power);
