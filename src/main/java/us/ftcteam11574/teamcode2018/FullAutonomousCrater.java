@@ -13,16 +13,20 @@ public class FullAutonomousCrater extends GenericAutonomous {
         robotDetachRobotFromLander();
 
         driveMoveToRelativePosition(300, 300, 0.5);
-        driveMoveToAngle(25, 0.5);
+
+        if (mineralPosition == GoldMineralLocator.MineralPosition.RIGHT) {
+            driveMoveToAngle(25, 0.5);
+        } else if (mineralPosition == GoldMineralLocator.MineralPosition.LEFT) {
+            driveMoveToAngle(-25, 0.5);
+        }
+
         driveMoveToRelativePosition(500, 500, 0.5);
         driveMoveToRelativePosition(-400, -400, 0.5);
         driveMoveToAngle(-65, 0.5);
         waitTime(250);
         driveToDiagonalDistance(150, 0.75);
-        //driveMoveToRelativePosition(0, 100, 1.0);
         driveMoveToAngle(getAngle() - 10, 0.5);
         driveToDistanceUsingSideSensor(70, 0.5);
-        //driveMoveToRelativePosition(0, 100, 1.0);
         driveMoveToAngle(getAngle() -10, 0.5);
         driveToDistanceParallelToWall(550, 70, 1.0);
         winchMoveToZero();
