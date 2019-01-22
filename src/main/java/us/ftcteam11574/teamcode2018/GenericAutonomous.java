@@ -259,7 +259,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
     }
 
     double getDistanceFromWall() {
-        return (getDistanceFromRightFront() + getDistanceFromRightRear()) / 2.0;
+        return Math.min(Math.min(getDistanceFromRightFront(), getDistanceFromRightRear()), getDistanceDiagonal());
     }
 
     double getSkew() {
@@ -270,7 +270,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
     }
 
     double getDistanceCorrection(double desiredDistance, double currentDistance) {
-        return Range.clip((currentDistance - desiredDistance) / 100.0, -0.1, 0.1);
+        return Range.clip((currentDistance - desiredDistance) / 100.0, -0.3, 0.3);
     }
 
     void driveToDistance(double distance, double power) {
@@ -355,7 +355,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
             double mR_power = power;
 
 
-            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromRightFront());
+            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromWall());
 
             if (currentDistanceCorrection < 0.1) {
                 mL_power *= 1.0 - Math.abs(currentDistanceCorrection);
@@ -398,18 +398,15 @@ abstract public class GenericAutonomous extends LinearOpMode {
                 break;
 
             double currentSkew = getSkew();
-            double currentDistanceFromWall =
-                    (getDistanceFromRightFront() + getDistanceFromRightRear()) / 2.0;
-
             double mL_power = power * Math.signum(distance);
             double mR_power = power * Math.signum(distance);
 
 
-            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromRightRear());
+            double currentDistanceCorrection = getDistanceCorrection(distanceFromWall, getDistanceFromWall());
 
-            if (currentDistanceCorrection < 0.1) {
+            if (currentDistanceCorrection > 0.1) {
                 mL_power *= 1.0 - Math.abs(currentDistanceCorrection);
-            } else if (currentDistanceCorrection > 0.1) {
+            } else if (currentDistanceCorrection < 0.1) {
                 mR_power *= 1.0 - Math.abs(currentDistanceCorrection);
             } else {
                 if (currentSkew < 0) {
@@ -468,6 +465,8 @@ abstract public class GenericAutonomous extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        boolean cameraEnabled = true;
+
         info("Running Program " + getClass().getName());
         robotInit();
 
@@ -485,6 +484,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
 
         // Turn off the pipeline and keep whatever the last thing we saw was.
         goldMineralPipeline.disable();
+        cameraEnabled = false;
 
         if (isStopRequested()) {
             return;
@@ -515,7 +515,7 @@ abstract public class GenericAutonomous extends LinearOpMode {
             if (t instanceof StopImmediatelyException) {
                 info("Stop requested!");
                 robotStopAllMotion();
-                goldMineralPipeline.disable();
+                if (cameraEnabled) goldMineralPipeline.disable();
                 return;
             }
 

@@ -14,11 +14,12 @@ public class PeriodicRev2mDistanceSensor extends PeriodicSensor {
 
     @Override
     protected void initializeSensor(final HardwareMap hardwareMap, final String deviceName) {
-        mSensor = hardwareMap.get(Rev2mDistanceSensor.class, deviceName);
+        //mSensor = hardwareMap.get(Rev2mDistanceSensor.class, deviceName);
     }
 
     @Override
     protected double getSensorValue() {
-        return mSensor.getDistance(DistanceUnit.MM);
+        //return mSensor.getDistance(DistanceUnit.MM);
+        return 0.0;
     }
 }
