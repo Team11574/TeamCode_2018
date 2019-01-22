@@ -1,6 +1,7 @@
 package us.ftcteam11574.teamcode2018;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -9,6 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @SuppressWarnings({"unused"})
 @Autonomous
+@Disabled
 public class AutonomousLandNaiveClaim extends LinearOpMode {
     private DcMotor mL, mR, mW;
     private Servo sH;
